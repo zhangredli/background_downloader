@@ -272,6 +272,7 @@ class BDPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
          */
         @Suppress("SameReturnValue")
         fun pauseTaskWithId(taskId: String): Boolean {
+            Log.d(TAG, "pauseTaskWithId $taskId")
             pausedTaskIds.add(taskId)
             return true
         }
@@ -481,6 +482,8 @@ class BDPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
      */
     private suspend fun methodCancelTasksWithIds(call: MethodCall, result: Result) {
         @Suppress("UNCHECKED_CAST") val taskIds = call.arguments as List<String>
+
+        Log.v(TAG, "methodCancelTasksWithIds")
         result.success(cancelTasksWithIds(applicationContext, taskIds))
     }
 
@@ -533,6 +536,8 @@ class BDPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
      */
     private fun methodPause(call: MethodCall, result: Result) {
         val taskId = call.arguments as String
+
+        Log.d(TAG, "methodPause $taskId")
         result.success(pauseTaskWithId(taskId))
     }
 

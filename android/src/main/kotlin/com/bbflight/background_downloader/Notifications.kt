@@ -204,6 +204,7 @@ class NotificationReceiver : BroadcastReceiver() {
                     }
 
                     actionPause -> {
+                        Log.d(TAG, "actionPause")
                         BDPlugin.pauseTaskWithId(taskId)
                     }
 
@@ -238,18 +239,19 @@ class NotificationReceiver : BroadcastReceiver() {
         } else {
             // no taskId -> groupNotification, and can only be a cancel action so
             // no need to check
-            val groupNotificationName = bundle?.getString(keyGroupNotificationName)
-            if (groupNotificationName != null) {
-                // cancel all tasks associated with this group that have not yet completed
-                val groupNotification =
-                    NotificationService.groupNotifications[groupNotificationName]
-                if (groupNotification != null) {
-                    runBlocking {
-                        BDPlugin.cancelTasksWithIds(context,
-                            groupNotification.runningTasks.map { task -> task.taskId })
-                    }
-                }
-            }
+//            val groupNotificationName = bundle?.getString(keyGroupNotificationName)
+//            if (groupNotificationName != null) {
+//                // cancel all tasks associated with this group that have not yet completed
+//                val groupNotification =
+//                    NotificationService.groupNotifications[groupNotificationName]
+//                if (groupNotification != null) {
+//                    runBlocking {
+//                        Log.v("NotificationReceiver", "NotificationReceiver cancelTasksWithIds")
+//                        BDPlugin.cancelTasksWithIds(context,
+//                            groupNotification.runningTasks.map { task -> task.taskId })
+//                    }
+//                }
+//            }
         }
     }
 }
@@ -716,13 +718,15 @@ object NotificationService {
             }
             val androidNotification = builder.build()
             if (taskWorker.runInForeground) {
-                if (notificationType == NotificationType.running) {
+                if (notificationType == NotificationType.running && taskWorker.isActive) {
+                    //Log.i("Notification", "${System.currentTimeMillis()} Notification setForeground")
                     taskWorker.setForeground(
                         ForegroundInfo(
                             taskWorker.notificationId, androidNotification
                         )
                     )
                 } else {
+                    //Log.i("Notification", "${System.currentTimeMillis()} notify")
                     // to prevent the 'not running' notification getting killed as the foreground
                     // process is terminated, this notification is shown regularly, but with
                     // a delay
@@ -733,6 +737,7 @@ object NotificationService {
                 }
             } else {
                 val now = System.currentTimeMillis()
+                //Log.i("Notification", "$now not foreground notify")
                 val timeSinceLastUpdate = now - taskWorker.lastNotificationTime
                 taskWorker.lastNotificationTime = now
                 if (notificationType == NotificationType.running || timeSinceLastUpdate > 2000) {
@@ -860,6 +865,7 @@ object NotificationService {
     private suspend fun addToNotificationQueue(
         taskWorker: TaskWorker, notificationType: NotificationType? = null, builder: Builder? = null
     ) {
+        //Log.i("Notification", "${System.currentTimeMillis()} addToNotificationQueue")
         queue.send(NotificationData(taskWorker, notificationType, builder))
     }
 
@@ -868,9 +874,11 @@ object NotificationService {
      */
     private suspend fun processNotificationData(notificationData: NotificationData) {
         val now = System.currentTimeMillis()
+        //Log.i("Notification", "$now processNotificationData")
         val elapsed = now - lastNotificationTime
         if (elapsed < 200) {
-            delay(200 - elapsed)
+            //delay(200 - elapsed)
+            return
         }
         if (notificationData.notificationType != null && notificationData.builder != null) {
             displayNotification(
@@ -879,6 +887,7 @@ object NotificationService {
                 notificationData.builder
             )
         } else {
+            //Log.i("Notification", "$now remove the notification")
             // remove the notification
             with(NotificationManagerCompat.from(notificationData.taskWorker.applicationContext)) {
                 cancel(notificationData.taskWorker.notificationId)

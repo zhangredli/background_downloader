@@ -330,6 +330,9 @@ open class TaskWorker(
 
     lateinit var prefs: SharedPreferences
 
+    private var hasDeliveredResult = false
+    val isActive: Boolean
+        get() = !hasDeliveredResult && !isStopped
     /**
      * Worker execution entrypoint
      *
@@ -389,6 +392,7 @@ open class TaskWorker(
                 }
             }
         }
+        hasDeliveredResult = true
         return Result.success()
     }
 
@@ -644,6 +648,7 @@ open class TaskWorker(
             networkSpeed,
             timeRemaining
         )
+        //Log.i(TAG, "${currentTimeMillis()} Task updateNotification")
         NotificationService.updateNotification(
             this,
             TaskStatus.running,
