@@ -198,6 +198,7 @@ class DownloadTaskWorker(applicationContext: Context, workerParams: WorkerParame
 
                 TaskStatus.paused -> {
                     BDPlugin.pausedTaskIds.remove(task.taskId)
+                    Log.i(TAG, "pausedTaskIds remove ${task.taskId}")
                     if (taskCanResume) {
                         Log.i(TAG, "Task ${task.taskId} paused")
                         processResumeData(
@@ -302,9 +303,9 @@ class DownloadTaskWorker(applicationContext: Context, workerParams: WorkerParame
                 return true
             } else {
                 // attempt to truncate the file to the expected size
-                Log.d(
+                Log.i(
                     TAG,
-                    "File length = ${tempFile.length()} vs requiredStartByte = $requiredStartByte"
+                    "File length = ${tempFile.length()} vs requiredStartByte = $requiredStartByte for taskId ${task.taskId}"
                 )
                 if (tempFileLength > requiredStartByte && Build.VERSION.SDK_INT >= 26) {
                     try {
@@ -312,16 +313,16 @@ class DownloadTaskWorker(applicationContext: Context, workerParams: WorkerParame
                             FileChannel.open(tempFile.toPath(), StandardOpenOption.WRITE)
                         fileChannel.truncate(requiredStartByte)
                         fileChannel.close()
-                        Log.d(TAG, "Truncated temp file to desired length")
+                        Log.i(TAG, "Truncated temp file to desired length")
                         return true
                     } catch (e: IOException) {
                         e.printStackTrace()
                     }
                 }
-                Log.i(TAG, "Partially downloaded file is corrupted, resume not possible")
+                Log.i(TAG, "Partially downloaded file is corrupted, resume not possible for taskId ${task.taskId}")
             }
         } else {
-            Log.i(TAG, "Partially downloaded file not available, resume not possible")
+            Log.i(TAG, "Partially downloaded file not available, resume not possible for taskId ${task.taskId}")
         }
         return false
     }
@@ -356,11 +357,11 @@ class DownloadTaskWorker(applicationContext: Context, workerParams: WorkerParame
         val total = matchResult.groups[3]?.value?.toLong()!!
         val tempFile = File(tempFilePath)
         val tempFileLength = tempFile.length()
+        startByte = start - taskRangeStartByte // relative to start of range
         Log.d(
             TAG,
-            "Resume start=$start, end=$end of total=$total bytes, tempFile = $tempFileLength bytes"
+            "Resume start=$start, startByte=$startByte, end=$end of total=$total bytes, tempFile = $tempFileLength bytes for taskId ${task.taskId}"
         )
-        startByte = start - taskRangeStartByte // relative to start of range
         if (startByte > tempFileLength) {
             Log.i(TAG, "Offered range not feasible: $range with startByte $startByte")
             taskException = TaskException(

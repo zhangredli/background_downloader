@@ -113,6 +113,7 @@ class BDPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
                 Log.w(TAG, "Could not find backgroundChannel for taskId ${task.taskId}")
             }
             canceledTaskIds.remove(task.taskId)
+            if(pausedTaskIds.contains(task.taskId)) pausedTaskIds.remove(task.taskId)
             val dataBuilder = Data.Builder().putString(TaskWorker.keyTask, taskToJsonString(task))
             if (notificationConfigJsonString != null) {
                 dataBuilder.putString(
@@ -272,7 +273,7 @@ class BDPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
          */
         @Suppress("SameReturnValue")
         fun pauseTaskWithId(taskId: String): Boolean {
-            Log.d(TAG, "pauseTaskWithId $taskId")
+            Log.i(TAG, "pauseTaskWithId $taskId")
             pausedTaskIds.add(taskId)
             return true
         }

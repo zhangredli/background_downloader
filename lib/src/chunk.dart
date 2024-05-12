@@ -108,7 +108,7 @@ Future<bool> resumeChunkTasks(
   if (results.any((result) => result == false)) {
     // cancel [ParallelDownloadTask] if any resume did not succeed.
     // this will also cancel all chunk tasks
-    await FileDownloader().cancelTaskWithId(task.taskId);
+    //await FileDownloader().cancelTaskWithId(task.taskId);
     return false;
   }
   return true;

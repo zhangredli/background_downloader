@@ -527,6 +527,10 @@ open class TaskWorker(
     suspend fun transferBytes(
         inputStream: InputStream, outputStream: OutputStream, contentLength: Long, task: Task
     ): TaskStatus {
+        Log.i(
+                TAG,
+                "transferBytes for taskId ${task.taskId}"
+        )
         val dataBuffer = ByteArray(bufferSize)
         var numBytes: Int
         return withContext(Dispatchers.Default) {
