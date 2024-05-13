@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:background_downloader/src/chunk.dart';
 import 'package:background_downloader/src/permissions.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
@@ -417,13 +419,32 @@ abstract base class BaseDownloader {
       final task =
           pausedTasks.firstWhereOrNull((element) => element.taskId == taskId);
       if (task != null) {
-        final resumeData = await getResumeData(task.taskId);
-        if (!Platform.isIOS && resumeData != null) {
-          final tempFilePath = resumeData.tempFilepath;
-          try {
-            await File(tempFilePath).delete();
-          } on FileSystemException {
-            log.fine('Could not delete temp file $tempFilePath');
+        if (task is ParallelDownloadTask) {
+          final resumeData = await getResumeData(task.taskId);
+          if (resumeData != null) {
+            final chunks = List<Chunk>.from(
+                jsonDecode(resumeData.data, reviver: Chunk.listReviver));
+            for (final chunk in chunks) {
+              final tempFilePath =
+                  (await getResumeData(chunk.task.taskId))?.tempFilepath;
+              if (tempFilePath != null) {
+                try {
+                  await File(tempFilePath).delete();
+                } on FileSystemException {
+                  log.fine('Could not delete temp file $tempFilePath');
+                }
+              }
+            }
+          }
+        } else {
+          final resumeData = await getResumeData(task.taskId);
+          if (!Platform.isIOS && resumeData != null) {
+            final tempFilePath = resumeData.tempFilepath;
+            try {
+              await File(tempFilePath).delete();
+            } on FileSystemException {
+              log.fine('Could not delete temp file $tempFilePath');
+            }
           }
         }
         processStatusUpdate(TaskStatusUpdate(task, TaskStatus.canceled));
