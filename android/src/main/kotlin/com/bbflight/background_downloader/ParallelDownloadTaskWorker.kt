@@ -136,6 +136,14 @@ class ParallelDownloadTaskWorker(applicationContext: Context, workerParams: Work
                         // The Dart side will resume each chunk task, so we just wait for the
                         // completer to complete
                         chunks = Json.decodeFromString(chunksJsonString)
+                        for (chunk in chunks) {
+                            if(chunk.url.isEmpty()) {
+                                chunk.url = task.url
+                            }
+                            if(chunk.task.url.isEmpty()) {
+                                chunk.task.url = task.url
+                            }
+                        }
                         parallelDownloadContentLength = chunks.fold(0L) { acc, chunk ->
                             acc + chunk.toByte - chunk.fromByte + 1
                         }
@@ -439,7 +447,7 @@ class ParallelDownloadTaskWorker(applicationContext: Context, workerParams: Work
 @Serializable
 class Chunk private constructor(
     private val parentTaskId: String,
-    private val url: String,
+    var url: String,
     private val filename: String,
     val task: Task,
     val fromByte: Long,

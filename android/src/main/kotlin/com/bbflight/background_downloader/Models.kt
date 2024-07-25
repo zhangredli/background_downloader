@@ -66,7 +66,7 @@ private class UpdatesSerializer: EnumAsIntSerializer<Updates>(
 @Serializable
 class Task(
     val taskId: String = "${Random.nextInt().absoluteValue}",
-    val url: String,
+    var url: String,
     val urls: List<String> = listOf(),
     val filename: String,
     val headers: Map<String, String>,

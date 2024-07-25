@@ -122,8 +122,20 @@ class BDPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
                 )
             }
             if (resumeData != null) {
-                dataBuilder.putString(TaskWorker.keyResumeDataData, resumeData.data)
-                    .putLong(TaskWorker.keyStartByte, resumeData.requiredStartByte)
+                if (task.isParallelDownloadTask()) {
+                    Log.i(TAG, "Enqueuing task is ParallelDownloadTask")
+                    var chunks: List<Chunk> = Json.decodeFromString(resumeData.data)
+                    for (chunk in chunks) {
+                        chunk.url = ""
+                        chunk.task.url = ""
+                    }
+                    var newData = Json.encodeToString(chunks)
+                    //Log.i(TAG, newData)
+                    dataBuilder.putString(TaskWorker.keyResumeDataData, newData)
+                } else {
+                    dataBuilder.putString(TaskWorker.keyResumeDataData, resumeData.data)
+                }
+                dataBuilder.putLong(TaskWorker.keyStartByte, resumeData.requiredStartByte)
                     .putString(TaskWorker.keyETag, resumeData.eTag)
             }
             val data = dataBuilder.build()
@@ -697,9 +709,13 @@ class BDPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
         val statusOrdinal = args[2] as Int
         val exceptionJson = args[3] as String?
         val exception = if (exceptionJson != null) {
-            TaskException(
-                Json.decodeFromString<Map<String, Any>>(exceptionJson)
-            )
+            try {
+                TaskException(
+                    Json.decodeFromString<Map<String, Any>>(exceptionJson)
+                )
+            } catch (e: Exception){
+                null
+            }
         } else null
         val responseBody = args[4] as String?
         parallelDownloadTaskWorkers[taskId]?.chunkStatusUpdate(
