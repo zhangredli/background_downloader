@@ -82,7 +82,7 @@ class DownloadTaskWorker(applicationContext: Context, workerParams: WorkerParame
                 deleteTempFile()
                 return TaskStatus.failed
             }
-            if (isResume && (eTagHeader != eTag || eTag?.subSequence(0, 1) == "W/")) {
+            if (isResume && eTag!= "update_resume" && (eTagHeader != eTag || eTag?.subSequence(0, 1) == "W/")) {
                 deleteTempFile()
                 Log.i(TAG, "Cannot resume: ETag is not identical, or is weak")
                 taskException = TaskException(

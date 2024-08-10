@@ -9,6 +9,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 
+import 'chunk.dart';
 import 'database.dart';
 import 'exceptions.dart';
 import 'models.dart';
@@ -506,6 +507,38 @@ abstract base class BaseDownloader {
   ///
   /// Returns true if successful
   Future<bool> pause(Task task);
+
+  Future<bool> updateUrl(Task task, dynamic url,
+      {Map<String, String>? urlQueryParameters}) async {
+    task.updateUrl(url, urlQueryParameters: urlQueryParameters);
+    if (task is ParallelDownloadTask && url is String) {
+      final taskResumeData = await getResumeData(task.taskId);
+      if (taskResumeData != null) {
+        var chunks = await updateChunkTasksUrl(task, taskResumeData, url,
+            urlQueryParameters: urlQueryParameters);
+        for (var chunk in chunks) {
+          var chunkResumeData = await getResumeData(chunk.task.taskId);
+          if (chunkResumeData != null) {
+            chunkResumeData.eTag = "update_resume";
+            chunkResumeData.task = chunk.task;
+            setResumeData(chunkResumeData);
+          }
+        }
+        taskResumeData.data =
+            jsonEncode(chunks.map((e) => e.toJson()).toList());
+        taskResumeData.eTag = "update_resume";
+        setResumeData(taskResumeData);
+      }
+    } else {
+      var resumeData = await getResumeData(task.taskId);
+      if (resumeData != null) {
+        resumeData.task = task;
+        resumeData.eTag = "update_resume";
+        setResumeData(resumeData);
+      }
+    }
+    return true;
+  }
 
   /// Attempt to resume this [task]
   ///

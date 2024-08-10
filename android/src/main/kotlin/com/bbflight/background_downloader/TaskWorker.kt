@@ -430,6 +430,10 @@ open class TaskWorker(
                 )
                 BDPlugin.haveLoggedProxyMessage = true
             }
+            Log.i(
+                TAG,
+                "taskId ${task.taskId} doTask url:$url"
+            )
             with(withContext(Dispatchers.IO) {
                 url.openConnection(proxy ?: Proxy.NO_PROXY)
             } as HttpURLConnection) {

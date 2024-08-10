@@ -535,6 +535,10 @@ interface class FileDownloader {
     return false;
   }
 
+  Future<bool> updateUrl(DownloadTask task, dynamic url,
+          {Map<String, String>? urlQueryParameters}) =>
+      _downloader.updateUrl(task, url, urlQueryParameters: urlQueryParameters);
+
   /// Resume the task
   ///
   /// If no resume data is available for this task, the call to [resume]

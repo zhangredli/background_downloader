@@ -341,13 +341,12 @@ const progressPaused = -5.0;
 
 /// Holds data associated with a resume
 class ResumeData {
-  final Task task;
-  final String data;
+  Task task;
+  String data;
   final int requiredStartByte;
-  final String? eTag;
+  String? eTag;
 
-  const ResumeData(this.task, this.data,
-      [this.requiredStartByte = 0, this.eTag]);
+  ResumeData(this.task, this.data, [this.requiredStartByte = 0, this.eTag]);
 
   /// Create object from [json]
   ResumeData.fromJson(Map<String, dynamic> json)

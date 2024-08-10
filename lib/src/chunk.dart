@@ -9,7 +9,7 @@ import 'task.dart';
 class Chunk {
   // key parameters
   final String parentTaskId;
-  final String url;
+  String url;
   final String filename;
   final int fromByte; // start byte
   final int toByte; // end byte
@@ -112,4 +112,16 @@ Future<bool> resumeChunkTasks(
     return false;
   }
   return true;
+}
+
+Future<List<Chunk>> updateChunkTasksUrl(
+    ParallelDownloadTask task, ResumeData resumeData, String url,
+    {Map<String, String>? urlQueryParameters}) async {
+  final chunks =
+      List<Chunk>.from(jsonDecode(resumeData.data, reviver: Chunk.listReviver));
+  for (var chunk in chunks) {
+    chunk.task.updateUrl(url, urlQueryParameters: urlQueryParameters);
+    chunk.url = chunk.task.url;
+  }
+  return chunks;
 }

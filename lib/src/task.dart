@@ -24,7 +24,18 @@ base class Request {
   final validHttpMethods = ['GET', 'POST', 'HEAD', 'PUT', 'DELETE', 'PATCH'];
 
   /// String representation of the url, urlEncoded
-  final String url;
+  String _url;
+  String get url => _url;
+
+  set url(String url) {
+    this._url = url;
+  }
+
+  updateUrl(dynamic url, {Map<String, String>? urlQueryParameters}) {
+    this._url = url is String
+        ? urlWithQueryParameters(url, urlQueryParameters)
+        : this._url;
+  }
 
   /// potential additional headers to send with the request
   final Map<String, String> headers;
@@ -70,7 +81,7 @@ base class Request {
       post,
       this.retries = 0,
       DateTime? creationTime})
-      : url = urlWithQueryParameters(url, urlQueryParameters),
+      : _url = urlWithQueryParameters(url, urlQueryParameters),
         httpRequestMethod =
             httpRequestMethod?.toUpperCase() ?? (post == null ? 'GET' : 'POST'),
         post = post is Uint8List ? String.fromCharCodes(post) : post,
@@ -87,7 +98,7 @@ base class Request {
 
   /// Creates object from [json]
   Request.fromJson(Map<String, dynamic> json)
-      : url = json['url'] ?? '',
+      : _url = json['url'] ?? '',
         headers = Map<String, String>.from(json['headers'] ?? {}),
         httpRequestMethod = json['httpRequestMethod'] as String? ??
             (json['post'] == null ? 'GET' : 'POST'),
@@ -234,7 +245,7 @@ sealed class Task extends Request implements Comparable {
   final int priority;
 
   /// User-defined metadata - use {metaData} in notification
-  final String metaData;
+  String metaData;
 
   /// Human readable name for this task - use {displayName} in notification
   final String displayName;
@@ -996,10 +1007,19 @@ final class MultiUploadTask extends UploadTask {
 
 final class ParallelDownloadTask extends DownloadTask {
   /// List of URLs to download the file from
-  final List<String> urls;
+  List<String> urls;
 
   /// Number of chunks per URL
   final int chunks;
+
+  @override
+  updateUrl(dynamic url, {Map<String, String>? urlQueryParameters}) {
+    super.updateUrl(url, urlQueryParameters: urlQueryParameters);
+    urls = url is String
+        ? [urlWithQueryParameters(url, urlQueryParameters)]
+        : List.from(
+            url.map((e) => urlWithQueryParameters(e, urlQueryParameters)));
+  }
 
   /// Creates a [ParallelDownloadTask]
   ///
