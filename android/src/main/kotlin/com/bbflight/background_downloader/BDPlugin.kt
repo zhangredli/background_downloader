@@ -139,9 +139,10 @@ class BDPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
                     .putString(TaskWorker.keyETag, resumeData.eTag)
             }
             val data = dataBuilder.build()
-            val constraints = Constraints.Builder().setRequiredNetworkType(
-                if (task.requiresWiFi) NetworkType.UNMETERED else NetworkType.CONNECTED
-            ).build()
+//            val constraints = Constraints.Builder().setRequiredNetworkType(
+//                if (task.requiresWiFi) NetworkType.UNMETERED else NetworkType.CONNECTED
+//            ).build()
+            val constraints = Constraints.Builder().build()
             val requestBuilder =
                 if (task.isParallelDownloadTask())
                     OneTimeWorkRequestBuilder<ParallelDownloadTaskWorker>()
@@ -464,7 +465,7 @@ class BDPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
     /**
      * Returns a list of tasks for all tasks in progress, as a list of JSON strings
      */
-    private fun methodAllTasks(call: MethodCall, result: Result) {
+    private suspend fun methodAllTasks(call: MethodCall, result: Result) {
         val group = call.arguments as String
         val workManager = WorkManager.getInstance(applicationContext)
         val workInfos = workManager.getWorkInfosByTag(TAG).get()
@@ -480,6 +481,8 @@ class BDPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
                     val task = tasksMap[taskId]
                     if (task != null) {
                         tasksAsListOfJsonStrings.add(Json.encodeToString(task))
+                    } else {
+                        cancelTasksWithIds(applicationContext, arrayListOf(taskId))
                     }
                 }
             }
